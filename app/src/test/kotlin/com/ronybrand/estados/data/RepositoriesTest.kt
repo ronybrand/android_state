@@ -22,7 +22,7 @@ class RepositoriesTest {
     private val server = MockWebServer().apply { start() }
     private val keychain = InMemoryKeyValueStore()
     private val test = TestApi(server, com.ronybrand.estados.core.SecureTokenStore(keychain))
-    private val states = StateRepository(test.api)
+    private val states = ApiStateRepository(test.api)
 
     @AfterTest
     fun tearDown() = server.close()
@@ -132,7 +132,7 @@ class RepositoriesTest {
     fun `login stores the token only once the backend issued it`() {
         val token = jwtValidFor()
         server.enqueue(json("""{"token":"$token","expiresInSeconds":3600}"""))
-        val auth = AuthRepository(test.api, test.tokens)
+        val auth = ApiAuthRepository(test.api, test.tokens)
 
         val result = runBlocking { auth.login("admin", "secret") }
 
@@ -148,7 +148,7 @@ class RepositoriesTest {
     @Test
     fun `a refused login stores nothing`() {
         server.enqueue(json("""{"message":"bad credentials"}""", code = 401))
-        val auth = AuthRepository(test.api, test.tokens)
+        val auth = ApiAuthRepository(test.api, test.tokens)
 
         assertEquals(401, assertFailsWith<ApiException> { runBlocking { auth.login("admin", "wrong") } }.status)
 
@@ -159,7 +159,7 @@ class RepositoriesTest {
     @Test
     fun `a login answer without a token is malformed and stores nothing`() {
         server.enqueue(json("""{"expiresInSeconds":3600}"""))
-        val auth = AuthRepository(test.api, test.tokens)
+        val auth = ApiAuthRepository(test.api, test.tokens)
 
         assertFailsWith<MalformedResponseException> { runBlocking { auth.login("admin", "secret") } }
         assertNull(test.tokens.current)
@@ -169,7 +169,7 @@ class RepositoriesTest {
     fun `logout forgets the token`() {
         test.tokens.save(jwtValidFor())
 
-        AuthRepository(test.api, test.tokens).logout()
+        ApiAuthRepository(test.api, test.tokens).logout()
 
         assertNull(test.tokens.current)
     }
@@ -178,7 +178,7 @@ class RepositoriesTest {
     fun `reads the backend build from the actuator`() {
         server.enqueue(json("""{"build":{"commit":"abc1234","time":"2026-10-01T12:00:00.000Z"}}"""))
 
-        val info = runBlocking { InfoRepository(test.api).backendInfo() }
+        val info = runBlocking { ApiInfoRepository(test.api).backendInfo() }
 
         assertEquals("abc1234", info.commit)
         assertEquals(Instant.parse("2026-10-01T12:00:00Z"), info.time.atZone(java.time.ZoneId.systemDefault()).toInstant())
@@ -188,6 +188,6 @@ class RepositoriesTest {
     @Test
     fun `an actuator answer without build info is malformed`() {
         server.enqueue(json("""{"git":{}}"""))
-        assertFailsWith<MalformedResponseException> { runBlocking { InfoRepository(test.api).backendInfo() } }
+        assertFailsWith<MalformedResponseException> { runBlocking { ApiInfoRepository(test.api).backendInfo() } }
     }
 }

@@ -11,13 +11,25 @@ import kotlinx.serialization.json.put
 private const val BASE_PATH = "/estado"
 private const val PAGE_SIZE = 100
 
-class StateRepository(private val api: ApiClient) {
+interface StateRepository {
+    suspend fun list(search: String? = null, sort: String? = null): List<FederativeUnit>
+
+    suspend fun get(id: Int): FederativeUnit
+
+    suspend fun create(unit: NewFederativeUnit): FederativeUnit
+
+    suspend fun update(unit: FederativeUnit): FederativeUnit
+
+    suspend fun delete(id: Int)
+}
+
+class ApiStateRepository(private val api: ApiClient) : StateRepository {
     /**
      * size=100 covers the whole dataset (27 units) in one page: the backend only exposes the paginated endpoint, and a
      * closed domain never needs a second page. `busca` and `sort` only enter the query string when provided; their
      * absence means "no filter" and "no explicit ordering".
      */
-    suspend fun list(search: String? = null, sort: String? = null): List<FederativeUnit> {
+    override suspend fun list(search: String?, sort: String?): List<FederativeUnit> {
         val query = buildList {
             add("size" to PAGE_SIZE.toString())
             if (!search.isNullOrEmpty()) add("busca" to search)
@@ -27,26 +39,32 @@ class StateRepository(private val api: ApiClient) {
         return page.array("content", "page").map { FederativeUnit.fromJson(it.asObject("federative unit")) }
     }
 
-    suspend fun get(id: Int): FederativeUnit =
+    override suspend fun get(id: Int): FederativeUnit =
         FederativeUnit.fromJson(api.send("GET", "$BASE_PATH/$id").asObject("federative unit"))
 
-    suspend fun create(unit: NewFederativeUnit): FederativeUnit =
+    override suspend fun create(unit: NewFederativeUnit): FederativeUnit =
         FederativeUnit.fromJson(api.send("POST", "$BASE_PATH/", body = unit.toRequestJson()).asObject("federative unit"))
 
-    suspend fun update(unit: FederativeUnit): FederativeUnit = FederativeUnit.fromJson(
+    override suspend fun update(unit: FederativeUnit): FederativeUnit = FederativeUnit.fromJson(
         api.send("PUT", "$BASE_PATH/${unit.id}", body = unit.toRequestJson()).asObject("federative unit"),
     )
 
-    suspend fun delete(id: Int) {
+    override suspend fun delete(id: Int) {
         api.send("DELETE", "$BASE_PATH/$id")
     }
 }
 
 data class LoginResult(val token: String, val expiresInSeconds: Int)
 
-class AuthRepository(private val api: ApiClient, private val tokens: TokenStore) {
+interface AuthRepository {
+    suspend fun login(username: String, password: String): LoginResult
+
+    fun logout()
+}
+
+class ApiAuthRepository(private val api: ApiClient, private val tokens: TokenStore) : AuthRepository {
     /** Stores the token only once the backend has issued it. */
-    suspend fun login(username: String, password: String): LoginResult {
+    override suspend fun login(username: String, password: String): LoginResult {
         val body = buildJsonObject {
             put("username", username)
             put("password", password)
@@ -57,15 +75,19 @@ class AuthRepository(private val api: ApiClient, private val tokens: TokenStore)
         return result
     }
 
-    fun logout() {
+    override fun logout() {
         tokens.clear()
     }
 }
 
 data class BackendInfo(val commit: String, val time: LocalDateTime)
 
-class InfoRepository(private val api: ApiClient) {
-    suspend fun backendInfo(): BackendInfo {
+interface InfoRepository {
+    suspend fun backendInfo(): BackendInfo
+}
+
+class ApiInfoRepository(private val api: ApiClient) : InfoRepository {
+    override suspend fun backendInfo(): BackendInfo {
         val build = api.send("GET", "/actuator/info").asObject("info").obj("build", "info")
         val time = parseTimestampOrNull(build.string("time", "build")) ?: malformed("build", "time")
         return BackendInfo(build.string("commit", "build"), time)

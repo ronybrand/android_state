@@ -110,7 +110,7 @@ class ApiClient(private val baseUrl: String, private val http: OkHttpClient) {
     private fun parse(response: Response): JsonElement? {
         val text = response.body.string()
         if (!response.isSuccessful) {
-            throw ApiException(response.code, requestIdOf(text), "HTTP ${response.code}")
+            throw ApiException(response.code, requestIdFromBody(text), "HTTP ${response.code}")
         }
         if (text.isBlank()) return null
         return try {
@@ -133,7 +133,7 @@ class ApiClient(private val baseUrl: String, private val http: OkHttpClient) {
  * could answer something else on a gateway error. Validating the format avoids showing the user something that is not
  * really a correlation id.
  */
-internal fun requestIdOf(body: String): String? = runCatching {
+internal fun requestIdFromBody(body: String): String? = runCatching {
     val id = ((Json.parseToJsonElement(body) as? JsonObject)?.get("requestId") as? JsonPrimitive)?.contentOrNull?.trim()
     id?.takeIf(::isUuid)
 }.getOrNull()
