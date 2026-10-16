@@ -1,0 +1,15 @@
+# Signs in through the Login screen, from the list. Used by the flows that need a session.
+appId: com.ronybrand.estados
+---
+- tapOn:
+    id: 'log-in'
+- tapOn:
+    id: 'username'
+- inputText: 'admin'
+- tapOn:
+    id: 'password'
+- inputText: 'e2e-password'
+- hideKeyboard
+- tapOn:
+    id: 'submit-login'
+- assertVisible: 'Log out'

@@ -1,0 +1,10 @@
+// Android's "lint vital" check runs inside every assembleRelease (about 2.5 minutes on a CI
+// runner). It guards a build that is about to be published; the APK the e2e flows install
+// is thrown away. Matching by prefix keeps this working if AGP renames a task.
+allprojects {
+    tasks.configureEach { task ->
+        if (task.name.startsWith('lintVital')) {
+            task.enabled = false
+        }
+    }
+}

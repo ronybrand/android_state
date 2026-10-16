@@ -1,0 +1,15 @@
+# Starts the app from a clean state and waits until the first screen is really there.
+# Launching right after clearing the data can race with Android removing the old task:
+# the new process is killed ("remove task"), "failed to attach" shows up ten seconds later
+# and the app stays on the splash screen. Retrying the launch gets past it; a real failure
+# still fails the flow, because the wait below never succeeds.
+appId: com.ronybrand.estados
+---
+- retry:
+    maxRetries: 3
+    commands:
+      - launchApp:
+          clearState: true
+      - extendedWaitUntil:
+          visible: 'Brazilian States'
+          timeout: 20000

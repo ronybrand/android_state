@@ -1,0 +1,38 @@
+# Create, edit and delete a state through the real screens, against the mock API.
+appId: com.ronybrand.estados
+---
+- runFlow: helpers/launch-clean.yaml
+- runFlow: helpers/dismiss-system-dialogs.yaml
+- runFlow: helpers/login.yaml
+# Create
+- tapOn:
+    id: 'new-state'
+- tapOn:
+    id: 'abbreviation'
+- inputText: 'BA'
+- tapOn:
+    id: 'name'
+- inputText: 'Bahia'
+- hideKeyboard
+- tapOn:
+    id: 'save'
+- assertVisible: 'Bahia'
+# Edit
+- tapOn: 'Edit BA'
+- tapOn:
+    id: 'name'
+- eraseText: 50
+- inputText: 'Bahia Updated'
+- hideKeyboard
+- tapOn:
+    id: 'save'
+- assertVisible: 'Bahia Updated'
+# Delete: the dialog asks first, and Cancel keeps the row
+- tapOn: 'Delete BA'
+- assertVisible: 'Are you sure you want to delete BA?'
+- tapOn: 'Cancel'
+- assertVisible: 'Bahia Updated'
+- tapOn: 'Delete BA'
+- tapOn:
+    id: 'confirm-delete'
+- assertNotVisible: 'Bahia Updated'

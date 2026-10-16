@@ -1,0 +1,7 @@
+# estados://state/... opens a screen directly; the guard still applies to a signed-out user.
+appId: com.ronybrand.estados
+---
+- runFlow: helpers/launch-clean.yaml
+- runFlow: helpers/dismiss-system-dialogs.yaml
+- openLink: 'estados://state/1/edit'
+- assertVisible: 'Login'

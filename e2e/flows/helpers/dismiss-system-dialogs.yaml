@@ -1,0 +1,8 @@
+# A CI emulator is slow, and Android sometimes shows "<system app> isn't responding" over
+# the app, which hides it from Maestro. Choosing "Wait" keeps everything as it was. The
+# tap is optional: most of the time there is nothing to dismiss.
+appId: com.ronybrand.estados
+---
+- tapOn:
+    text: 'Wait'
+    optional: true

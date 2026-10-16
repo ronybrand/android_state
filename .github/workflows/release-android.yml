@@ -1,0 +1,58 @@
+name: Release (Android)
+
+# Builds the signed app bundle to upload to Google Play. Run by hand: a release is a decision, not a side effect of a
+# push.
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: >-
+          versionCode. Google Play rejects an upload whose version code is not higher than the last one, so it must grow
+          with every release.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Restore the upload key from repository secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::Secret ANDROID_KEYSTORE_BASE64 is not set (see the README, 'Release signing')."
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
+          KEYSTORE_PATH="$RUNNER_TEMP/upload-keystore.jks" bash scripts/ci/write-key-properties.sh
+
+      - name: Build the signed app bundle
+        run: ./gradlew :app:bundleRelease -PversionCode=${{ inputs.version_code }} --no-daemon
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: app-release-${{ inputs.version_code }}
+          path: app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
+
+      - name: Remove the key from the runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload-keystore.jks" key.properties

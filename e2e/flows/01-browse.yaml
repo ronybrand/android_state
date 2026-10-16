@@ -1,0 +1,20 @@
+# Reading is public: the list, the footer and the search work without signing in.
+appId: com.ronybrand.estados
+---
+- runFlow: helpers/launch-clean.yaml
+- runFlow: helpers/dismiss-system-dialogs.yaml
+- assertVisible: 'Brazilian States'
+- assertVisible: 'São Paulo'
+- assertVisible: 'Rio de Janeiro'
+- assertVisible: 'Minas Gerais'
+# The footer: app version from the binary, backend build from /actuator/info
+- assertVisible: 'app 0.1.0'
+- assertVisible: 'back e2e0001.*'
+# The search debounces, then asks the API (busca), and the other rows go away
+- tapOn:
+    id: 'search'
+- inputText: 'minas'
+- hideKeyboard
+- assertVisible: 'Minas Gerais'
+- assertNotVisible: 'São Paulo'
+- assertNotVisible: 'Rio de Janeiro'
