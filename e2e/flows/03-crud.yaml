@@ -17,7 +17,10 @@ appId: com.ronybrand.estados
 - tapOn:
     id: 'save'
 - assertVisible: 'Bahia'
-# Edit
+# Edit. The new row lands at the end of the list, below the fold: the LazyColumn composes only what is
+# on screen, so scroll to its buttons first.
+- scrollUntilVisible:
+    element: 'Edit BA'
 - tapOn: 'Edit BA'
 - tapOn:
     id: 'name'
@@ -28,11 +31,16 @@ appId: com.ronybrand.estados
     id: 'save'
 - assertVisible: 'Bahia Updated'
 # Delete: the dialog asks first, and Cancel keeps the row
+- scrollUntilVisible:
+    element: 'Delete BA'
 - tapOn: 'Delete BA'
 - assertVisible: 'Are you sure you want to delete BA?'
 - tapOn: 'Cancel'
 - assertVisible: 'Bahia Updated'
+- scrollUntilVisible:
+    element: 'Delete BA'
 - tapOn: 'Delete BA'
-- tapOn:
-    id: 'confirm-delete'
+# The dialog is a window of its own, so the test tags of the root are not exposed as ids there: find the button by
+# its text. The row buttons have no text of their own (their label is "Delete BA"), and the title is "Delete state".
+- tapOn: 'Delete'
 - assertNotVisible: 'Bahia Updated'
