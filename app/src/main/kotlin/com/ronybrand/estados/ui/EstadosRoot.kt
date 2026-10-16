@@ -4,12 +4,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -51,7 +51,7 @@ private fun NavHostController.close() {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun EstadosRoot(deps: AppDependencies, navController: NavHostController = rememberNavController()) {
-    val status by deps.auth.status.collectAsState()
+    val status by deps.auth.status.collectAsStateWithLifecycle()
     val route = navController.currentBackStackEntryAsState().value?.destination?.route
 
     // The session can end at any moment (an expired token, a 401): a protected screen goes back to the login at once.

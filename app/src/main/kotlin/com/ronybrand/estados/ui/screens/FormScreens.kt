@@ -2,13 +2,13 @@ package com.ronybrand.estados.ui.screens
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ronybrand.estados.core.attempt
 import com.ronybrand.estados.core.correlationId
 import com.ronybrand.estados.data.FederativeUnit
@@ -25,7 +25,7 @@ fun CreateStateScreen(states: StatesStore, onClose: () -> Unit) {
     val errors = rememberErrorMessage()
     val scope = rememberCoroutineScope()
     var saving by remember { mutableStateOf(false) }
-    val existing = states.state.collectAsState().value.units.orEmpty().map { it.abbreviation }
+    val existing = states.state.collectAsStateWithLifecycle().value.units.orEmpty().map { it.abbreviation }
 
     FormPage(title = "New state", error = errors.error, requestId = errors.requestId, onBack = onClose) {
         StateForm(
@@ -70,7 +70,7 @@ fun EditStateScreen(states: StatesStore, rawId: String?, onClose: () -> Unit) {
     LaunchedEffect(id) {
         loaded = attempt { states.load(id) }.fold(onSuccess = Loaded::Ready, onFailure = Loaded::Failed)
     }
-    val existing = states.state.collectAsState().value.units.orEmpty().map { it.abbreviation }
+    val existing = states.state.collectAsStateWithLifecycle().value.units.orEmpty().map { it.abbreviation }
     val failure = (loaded as? Loaded.Failed)?.error
 
     FormPage(

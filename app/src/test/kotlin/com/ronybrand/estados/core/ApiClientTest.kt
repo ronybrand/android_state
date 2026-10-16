@@ -224,4 +224,24 @@ class ApiClientTest {
             assertFailsWith<CancellationException> { pending.await() }
         }
     }
+
+    @Test
+    fun `a redirect to another host does not carry the bearer token along`() {
+        MockWebServer().use { elsewhere ->
+            elsewhere.start()
+            elsewhere.enqueue(json("{}"))
+            test.tokens.save(jwtValidFor())
+            // The api is reached as localhost; the redirect names the same machine by another host name.
+            server.enqueue(
+                MockResponse.Builder()
+                    .code(302)
+                    .addHeader("Location", "http://127.0.0.1:${elsewhere.port}/stolen")
+                    .build(),
+            )
+
+            send()
+
+            assertNull(elsewhere.takeRequest().headers["Authorization"])
+        }
+    }
 }

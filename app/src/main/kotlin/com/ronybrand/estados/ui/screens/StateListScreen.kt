@@ -31,7 +31,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ronybrand.estados.AppDependencies
 import com.ronybrand.estados.auth.AuthStatus
 import com.ronybrand.estados.core.attempt
@@ -74,9 +74,9 @@ fun StateListScreen(
     onEdit: (FederativeUnit) -> Unit,
 ) {
     val states = deps.states
-    val state by states.state.collectAsState()
-    val sort by states.sort.collectAsState()
-    val authenticated = deps.auth.status.collectAsState().value == AuthStatus.Authenticated
+    val state by states.state.collectAsStateWithLifecycle()
+    val sort by states.sort.collectAsStateWithLifecycle()
+    val authenticated = deps.auth.status.collectAsStateWithLifecycle().value == AuthStatus.Authenticated
     val errors = rememberErrorMessage()
     val scope = rememberCoroutineScope()
     val delete = remember { DeleteFlow(states, errors, scope) }
@@ -210,7 +210,7 @@ private fun Header(
     onNew: () -> Unit,
 ) {
     val states = deps.states
-    val sort by states.sort.collectAsState()
+    val sort by states.sort.collectAsStateWithLifecycle()
     // The text is the field's own state; the store only hears of it after the user stopped typing.
     var text by rememberSaveable { mutableStateOf(states.search.value) }
     LaunchedEffect(text) {
