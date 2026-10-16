@@ -1,8 +1,8 @@
 package com.ronybrand.estados.core
 
-import java.io.IOException
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -18,6 +18,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -26,11 +29,13 @@ const val LOGIN_PATH = "/auth/login"
 const val MAX_RETRIES = 2
 const val RETRY_BASE_DELAY_MS = 500L
 private const val TIMEOUT_SECONDS = 15L
-private const val SERVER_ERROR = 500
 
 /** A request the backend refused (a status) or that never got an answer (no status), with its correlation id. */
 class ApiException(val status: Int?, val requestId: String?, message: String, cause: Throwable? = null) :
     IOException(message, cause)
+
+/** The correlation id of a failed request, when the backend echoed one: what a user can quote to support. */
+val Throwable.correlationId: String? get() = (this as? ApiException)?.requestId
 
 /** The backend answered, but not with the shape this client expects. */
 class MalformedResponseException(message: String, cause: Throwable? = null) : IOException(message, cause)
@@ -38,8 +43,8 @@ class MalformedResponseException(message: String, cause: Throwable? = null) : IO
 /**
  * Builds the one HTTP client the app uses.
  *
- * - every action carries an `X-Request-Id`, generated once and kept across retries so all attempts correlate as a single
- *   action in the backend logs;
+ * - every action carries an `X-Request-Id`, generated once and kept across retries so all attempts correlate as a
+ *   single action in the backend logs;
  * - the bearer token goes on every request, which can only be aimed at the API: [ApiClient] builds each url from the
  *   base url, and a redirect to another host loses the header (OkHttp drops it);
  * - a failing GET is resent (twice, with exponential backoff);
@@ -66,16 +71,14 @@ private class ApiInterceptor(
             .header(REQUEST_ID_HEADER, newUuid())
             .apply { tokens.current?.let { header("Authorization", "Bearer $it") } }
             .build()
-        val isRetryable = request.method == "GET"
 
         var attempt = 0
         while (true) {
             val outcome = runCatching { chain.proceed(request) }
             val response = outcome.getOrNull()
-            val failed = response == null || response.code >= SERVER_ERROR
-            if (response != null && response.code == 401) return endSessionOn401(request, response)
-            if (!failed || !isRetryable || attempt >= MAX_RETRIES || chain.call().isCanceled()) {
-                return response ?: throw outcome.exceptionOrNull() as IOException
+            if (response?.code == HttpURLConnection.HTTP_UNAUTHORIZED) return endSessionOn401(request, response)
+            if (!(isFailure(response) && canRetry(request, chain.call(), attempt))) {
+                return response ?: outcome.getOrThrow()
             }
             response?.close()
             attempt++
@@ -83,8 +86,15 @@ private class ApiInterceptor(
         }
     }
 
-    // The login request itself is excluded: a wrong password also answers 401, and that is a normal form error. Only the
-    // first 401 to find a token announces the loss; concurrent ones see no token and do nothing.
+    private fun isFailure(response: Response?) =
+        response == null || response.code >= HttpURLConnection.HTTP_INTERNAL_ERROR
+
+    // Only a GET is safe to send again; a write that failed halfway may already have happened.
+    private fun canRetry(request: Request, call: Call, attempt: Int) =
+        request.method == "GET" && attempt < MAX_RETRIES && !call.isCanceled()
+
+    // The login request itself is excluded: a wrong password also answers 401, and that is a normal form error. Only
+    // the first 401 to find a token announces the loss; concurrent ones see no token and do nothing.
     private fun endSessionOn401(request: Request, response: Response): Response {
         if (!request.url.encodedPath.endsWith(LOGIN_PATH) && tokens.clear()) onSessionExpired()
         return response
@@ -100,11 +110,14 @@ class ApiClient(private val baseUrl: String, private val http: OkHttpClient) {
         query: List<Pair<String, String>> = emptyList(),
         body: JsonObject? = null,
     ): JsonElement? {
-        val url = (baseUrl + path).toHttpUrl().newBuilder().apply { query.forEach { (k, v) -> addQueryParameter(k, v) } }
+        val url = (baseUrl + path).toHttpUrl().newBuilder().apply {
+            query.forEach { (k, v) -> addQueryParameter(k, v) }
+        }
         val payload = body?.toString()?.toRequestBody(JSON_MEDIA_TYPE)
         val request = Request.Builder().url(url.build()).method(method, payload ?: emptyBodyFor(method)).build()
         val response = http.newCall(request).await()
-        return response.use { parse(it) }
+        // Reading the body is socket I/O, which Android forbids on the main thread.
+        return withContext(Dispatchers.IO) { response.use { parse(it) } }
     }
 
     private fun parse(response: Response): JsonElement? {
@@ -124,7 +137,13 @@ class ApiClient(private val baseUrl: String, private val http: OkHttpClient) {
         val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
 
         // OkHttp insists on a body for these verbs; a DELETE or GET carries none.
-        fun emptyBodyFor(method: String) = if (method == "POST" || method == "PUT" || method == "PATCH") "".toRequestBody() else null
+        fun emptyBodyFor(method: String) = if (method == "POST" || method == "PUT" ||
+            method == "PATCH"
+        ) {
+            "".toRequestBody()
+        } else {
+            null
+        }
     }
 }
 

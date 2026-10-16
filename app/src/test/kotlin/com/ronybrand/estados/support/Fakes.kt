@@ -7,8 +7,8 @@ import com.ronybrand.estados.data.InfoRepository
 import com.ronybrand.estados.data.LoginResult
 import com.ronybrand.estados.data.NewFederativeUnit
 import com.ronybrand.estados.data.StateRepository
-import java.time.LocalDateTime
 import kotlinx.coroutines.CompletableDeferred
+import java.time.LocalDateTime
 
 fun unit(id: Int, name: String, abbreviation: String, updated: LocalDateTime? = null) =
     FederativeUnit(id, name, abbreviation, LocalDateTime.of(2026, 1, 10, 9, 0, 0), updated)
@@ -36,7 +36,8 @@ class FakeStateRepository(initial: List<FederativeUnit> = SEED) : StateRepositor
         gate?.await()
         failList?.let { throw it }
         val matching = units.filter {
-            search == null || it.name.contains(search, ignoreCase = true) || it.abbreviation.contains(search, ignoreCase = true)
+            search == null || it.name.contains(search, ignoreCase = true) ||
+                it.abbreviation.contains(search, ignoreCase = true)
         }
         val field = sort?.substringBefore(',')
         val sorted = when (field) {

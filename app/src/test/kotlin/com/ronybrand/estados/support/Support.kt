@@ -4,10 +4,10 @@ import com.ronybrand.estados.core.ApiClient
 import com.ronybrand.estados.core.KeyValueStore
 import com.ronybrand.estados.core.SecureTokenStore
 import com.ronybrand.estados.core.buildHttpClient
-import java.time.Instant
-import java.util.Base64
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
+import java.time.Instant
+import java.util.Base64
 
 /** A keychain that lives in a map, so the token store can be tested without a device. */
 class InMemoryKeyValueStore(

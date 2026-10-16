@@ -1,10 +1,10 @@
 package com.ronybrand.estados.data
 
 import com.ronybrand.estados.core.parseTimestampOrNull
-import java.time.LocalDateTime
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.time.LocalDateTime
 
 private const val WHAT = "federative unit"
 
@@ -12,8 +12,9 @@ private const val WHAT = "federative unit"
  * A Brazilian federative unit (a "state"). Named after the domain term because it avoids a clash with the many things
  * called `State` on Android and in Compose.
  *
- * The backend's JSON uses Portuguese names (`nome`, `sigla`, ...); that is the real wire contract and is not translated.
- * [fromJson] and [toRequestJson] are the anti-corruption layer, so the rest of the app only ever sees English.
+ * The backend's JSON uses Portuguese names (`nome`, `sigla`, ...); that is the real wire contract and is not
+ * translated. [fromJson] and [toRequestJson] are the anti-corruption layer, so the rest of the app only ever sees
+ * English.
  */
 data class FederativeUnit(
     val id: Int,
@@ -31,11 +32,14 @@ data class FederativeUnit(
             name = json.string("nome", WHAT),
             abbreviation = json.string("sigla", WHAT),
             createdAt = json.timestamp("dataHoraCadastro"),
-            updatedAt = if (json.isNullOrAbsent("dataHoraUltimaAtualizacao")) null else json.timestamp("dataHoraUltimaAtualizacao"),
+            updatedAt = json.optionalTimestamp("dataHoraUltimaAtualizacao"),
         )
 
         private fun JsonObject.timestamp(key: String): LocalDateTime =
             parseTimestampOrNull(string(key, WHAT)) ?: malformed(WHAT, key)
+
+        private fun JsonObject.optionalTimestamp(key: String): LocalDateTime? =
+            if (isNullOrAbsent(key)) null else timestamp(key)
     }
 }
 

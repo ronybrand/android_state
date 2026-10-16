@@ -15,6 +15,8 @@ private val ABSOLUTE_HTTP_URL = Regex("^https?://[^\\s/]+", RegexOption.IGNORE_C
 fun resolveApiBaseUrl(raw: String?): String {
     val configured = raw?.trim().orEmpty()
     if (configured.isEmpty()) return DEFAULT_API_URL
-    require(ABSOLUTE_HTTP_URL.containsMatchIn(configured)) { "API_URL must be an absolute http(s) url, got \"$configured\"" }
+    require(ABSOLUTE_HTTP_URL.containsMatchIn(configured)) {
+        "API_URL must be an absolute http(s) url, got \"$configured\""
+    }
     return configured.trimEnd('/')
 }

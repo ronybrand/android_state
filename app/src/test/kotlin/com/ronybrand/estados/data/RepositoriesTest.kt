@@ -125,7 +125,12 @@ class RepositoriesTest {
     @Test
     fun `a failed write surfaces as an api error with its status`() {
         server.enqueue(json("""{"message":"duplicate"}""", code = 409))
-        assertEquals(409, assertFailsWith<ApiException> { runBlocking { states.create(NewFederativeUnit("AC", "Acre")) } }.status)
+        assertEquals(
+            409,
+            assertFailsWith<ApiException> {
+                runBlocking { states.create(NewFederativeUnit("AC", "Acre")) }
+            }.status,
+        )
     }
 
     @Test
@@ -181,7 +186,10 @@ class RepositoriesTest {
         val info = runBlocking { ApiInfoRepository(test.api).backendInfo() }
 
         assertEquals("abc1234", info.commit)
-        assertEquals(Instant.parse("2026-10-01T12:00:00Z"), info.time.atZone(java.time.ZoneId.systemDefault()).toInstant())
+        assertEquals(
+            Instant.parse("2026-10-01T12:00:00Z"),
+            info.time.atZone(java.time.ZoneId.systemDefault()).toInstant(),
+        )
         assertEquals("/api/actuator/info", server.takeRequest().url.encodedPath)
     }
 

@@ -5,15 +5,15 @@ import com.ronybrand.estados.core.SessionEvents
 import com.ronybrand.estados.support.FakeAuthRepository
 import com.ronybrand.estados.support.InMemoryKeyValueStore
 import com.ronybrand.estados.support.jwtExpiring
-import java.time.Instant
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import java.time.Instant
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthTest {

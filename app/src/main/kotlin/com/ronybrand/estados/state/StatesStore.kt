@@ -1,9 +1,9 @@
 package com.ronybrand.estados.state
 
+import com.ronybrand.estados.core.attempt
 import com.ronybrand.estados.data.FederativeUnit
 import com.ronybrand.estados.data.NewFederativeUnit
 import com.ronybrand.estados.data.StateRepository
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,14 +78,9 @@ class StatesStore(private val repository: StateRepository, private val scope: Co
         val search = searchState.value.ifEmpty { null }
         val sort = sortState.value.wire
         return scope.launch {
-            try {
-                val units = repository.list(search, sort)
-                uiState.value = StatesUiState(units = units, loading = false)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                uiState.update { it.copy(loading = false, error = e) }
-            }
+            attempt { repository.list(search, sort) }
+                .onSuccess { uiState.value = StatesUiState(units = it, loading = false) }
+                .onFailure { e -> uiState.update { it.copy(loading = false, error = e) } }
         }.also { loadJob = it }
     }
 

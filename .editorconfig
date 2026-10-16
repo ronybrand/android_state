@@ -16,3 +16,6 @@ ktlint_code_style = intellij_idea
 max_line_length = 120
 ktlint_standard_function-signature = disabled
 ktlint_standard_filename = disabled
+
+# Compose functions are named like the types they emit.
+ktlint_function_naming_ignore_when_annotated_with = Composable

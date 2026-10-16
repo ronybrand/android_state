@@ -3,12 +3,12 @@ package com.ronybrand.estados.auth
 import com.ronybrand.estados.core.SessionEvents
 import com.ronybrand.estados.core.TokenStore
 import com.ronybrand.estados.data.AuthRepository
-import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 enum class AuthStatus { Authenticated, Unauthenticated }
 

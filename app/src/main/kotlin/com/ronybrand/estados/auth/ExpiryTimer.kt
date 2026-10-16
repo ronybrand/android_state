@@ -3,12 +3,12 @@ package com.ronybrand.estados.auth
 import com.ronybrand.estados.core.TokenStore
 import com.ronybrand.estados.core.isTokenValid
 import com.ronybrand.estados.core.tokenExpiry
-import java.time.Duration
-import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.Instant
 
 /**
  * Nothing on the device announces that a JWT's `exp` has passed, and the app can stay open (or in the background) well

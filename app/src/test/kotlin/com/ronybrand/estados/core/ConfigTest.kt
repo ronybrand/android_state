@@ -25,7 +25,8 @@ class ConfigTest {
 
     @Test
     fun `rejects anything that is not an absolute http url`() {
-        val bad = listOf("api.example.com", "ftp://host/x", "/relative", "https://", "https:///path", "javascript:alert(1)")
+        val bad =
+            listOf("api.example.com", "ftp://host/x", "/relative", "https://", "https:///path", "javascript:alert(1)")
         for (value in bad) {
             assertFailsWith<IllegalArgumentException>(value) { resolveApiBaseUrl(value) }
         }

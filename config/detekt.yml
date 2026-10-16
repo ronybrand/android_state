@@ -32,5 +32,11 @@ style:
 
 naming:
   FunctionNaming:
-    # Backtick test names are the point of the test suite: they read as sentences in the report.
+    # Backtick test names are the point of the test suite: they read as sentences in the report. Compose functions are
+    # PascalCase by the framework's own convention.
     excludes: ["**/src/test/**", "**/src/integrationTest/**"]
+    ignoreAnnotated: ["Composable"]
+  MatchingDeclarationName:
+    # A file groups related declarations (the routes with the root composable, the palette with the theme); ktlint's
+    # filename rule is off for the same reason.
+    active: false

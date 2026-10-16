@@ -3,9 +3,9 @@ package com.ronybrand.estados.data
 import com.ronybrand.estados.core.ApiClient
 import com.ronybrand.estados.core.TokenStore
 import com.ronybrand.estados.core.parseTimestampOrNull
-import java.time.LocalDateTime
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import java.time.LocalDateTime
 
 /** Matches the backend's actual REST contract (/estado), not translated: renaming it here would break real calls. */
 private const val BASE_PATH = "/estado"
@@ -43,7 +43,9 @@ class ApiStateRepository(private val api: ApiClient) : StateRepository {
         FederativeUnit.fromJson(api.send("GET", "$BASE_PATH/$id").asObject("federative unit"))
 
     override suspend fun create(unit: NewFederativeUnit): FederativeUnit =
-        FederativeUnit.fromJson(api.send("POST", "$BASE_PATH/", body = unit.toRequestJson()).asObject("federative unit"))
+        FederativeUnit.fromJson(
+            api.send("POST", "$BASE_PATH/", body = unit.toRequestJson()).asObject("federative unit"),
+        )
 
     override suspend fun update(unit: FederativeUnit): FederativeUnit = FederativeUnit.fromJson(
         api.send("PUT", "$BASE_PATH/${unit.id}", body = unit.toRequestJson()).asObject("federative unit"),

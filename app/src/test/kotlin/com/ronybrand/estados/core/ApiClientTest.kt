@@ -224,5 +224,4 @@ class ApiClientTest {
             assertFailsWith<CancellationException> { pending.await() }
         }
     }
-
 }
