@@ -36,7 +36,7 @@ Hilt would add a code generator for something a constructor already does.
 | Router guard that waits for auth          | A `LaunchedEffect` on (session, route) sends a protected screen to the login        |
 | `State` type                              | `FederativeUnit`: `State` already means too many things in Compose                  |
 | Table, `<dialog>` confirmation            | `LazyColumn` + pull to refresh, `AlertDialog`                                       |
-| axe-core accessibility run                | Semantics: labelled row actions, live-region errors, a sort direction read aloud    |
+| axe-core accessibility run                | `assertAccessible` on every screen (48 dp targets, a label on every control), palette contrast, live-region errors, a sort direction read aloud |
 | Footer: frontend commit from version.json | App version from the binary (`BuildConfig.VERSION_NAME`)                            |
 | Page not found                            | None: only the app's own routes and deep links exist                                |
 
@@ -106,7 +106,7 @@ Deep links: `estados://state/new` and `estados://state/{id}/edit` (the guard sti
 ## Scripts
 
 ```bash
-./gradlew testDebugUnitTest      # 126 tests, JVM only (Robolectric draws the Compose screens)
+./gradlew testDebugUnitTest      # 143 tests, JVM only (Robolectric draws the Compose screens)
 ./gradlew koverVerify            # line coverage floor of 90% (about 98% measured)
 ./gradlew ktlintCheck detekt lintDebug
 ./gradlew :app:assembleRelease   # minified; unsigned without key.properties
@@ -176,8 +176,13 @@ clients' process and the history shows it.
 - **A run on a physical device or a local emulator.** No emulator was set up on the development
   machine, so the app has been exercised by the Robolectric tests and, in CI, by the Maestro flows
   on an emulator. Anything those cannot see (an OEM quirk, real TalkBack) has not been looked at.
-- **Android's own accessibility checks** (`enableAccessibilityChecks`) run only on a device or
-  emulator, not under Robolectric; the semantics are asserted by hand instead.
+- **Android's Accessibility Test Framework** (the checks of Google's Accessibility Scanner,
+  `enableAccessibilityChecks`) was tried and **does not work under Robolectric**: it did not flag a
+  16 dp unlabelled button, so it is not used. In its place `assertAccessible` checks, on every screen
+  and state, the two things Flutter's tap target and label guidelines check (a 48 dp touch target and a
+  label on every control) on the semantics tree, with negative controls that prove it can fail, and
+  `ContrastTest` asserts the palette's WCAG contrast. What stays unchecked is what only a device shows:
+  real TalkBack behaviour, and contrast over rendered pixels.
 - **Store listing**: screenshots, descriptions and the privacy policy that Google Play asks for, and
   the upload key (see above).
 - **A baseline profile and macrobenchmarks**: the app is small enough that startup has not been a
