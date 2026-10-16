@@ -40,6 +40,7 @@ appId: com.ronybrand.estados
 - scrollUntilVisible:
     element: 'Delete BA'
 - tapOn: 'Delete BA'
-- tapOn:
-    id: 'confirm-delete'
+# The dialog is a window of its own, so the test tags of the root are not exposed as ids there: find the button by
+# its text. The row buttons have no text of their own (their label is "Delete BA"), and the title is "Delete state".
+- tapOn: 'Delete'
 - assertNotVisible: 'Bahia Updated'
