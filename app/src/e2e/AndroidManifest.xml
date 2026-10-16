@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The e2e build talks plain http to the mock API on the emulator's localhost (adb reverse). Release keeps cleartext off. -->
+    <application android:networkSecurityConfig="@xml/network_security_config" />
+</manifest>
