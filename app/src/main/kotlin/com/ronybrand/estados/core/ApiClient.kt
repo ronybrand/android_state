@@ -37,6 +37,27 @@ class ApiException(val status: Int?, val requestId: String?, message: String, ca
 /** The correlation id of a failed request, when the backend echoed one: what a user can quote to support. */
 val Throwable.correlationId: String? get() = (this as? ApiException)?.requestId
 
+const val API_UNAVAILABLE_MESSAGE =
+    "The API is offline (paused to save cost). Turn it on with the link below; it takes about 1 minute."
+
+/**
+ * Page served by the start-api Lambda (backend repo, ADR 0026): anti-bot challenge, starts the EC2 and waits for the
+ * API to come back. Opened in the browser, since the challenge widget needs one. ?lang=en: this app is English-only.
+ */
+const val START_API_URL = "https://pizowbnhivr3vholalz5r7ajta0mkvqn.lambda-url.us-east-1.on.aws/?lang=en"
+
+private val GATEWAY_STATUSES = setOf(502, 503, 504)
+
+/**
+ * No usable backend answer: no response at all (network, DNS, timeout) or a gateway error. With the EC2 turned
+ * off (deploy/aws-power.ps1 in the backend repo) this is exactly what the user sees.
+ */
+val Throwable.isApiUnavailable: Boolean
+    get() = this is ApiException && (status == null || status in GATEWAY_STATUSES)
+
+/** [fallback] for an ordinary failure, or the "API offline" message when the API is unavailable. */
+fun Throwable.userMessage(fallback: String): String = if (isApiUnavailable) API_UNAVAILABLE_MESSAGE else fallback
+
 /** The backend answered, but not with the shape this client expects. */
 class MalformedResponseException(message: String, cause: Throwable? = null) : IOException(message, cause)
 

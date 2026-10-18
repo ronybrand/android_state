@@ -47,6 +47,7 @@ import com.ronybrand.estados.AppDependencies
 import com.ronybrand.estados.auth.AuthStatus
 import com.ronybrand.estados.core.attempt
 import com.ronybrand.estados.core.correlationId
+import com.ronybrand.estados.core.userMessage
 import com.ronybrand.estados.data.FederativeUnit
 import com.ronybrand.estados.state.StatesStore
 import com.ronybrand.estados.state.StatesUiState
@@ -83,7 +84,7 @@ fun StateListScreen(
     var refreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.error) {
-        state.error?.let { errors.show("Failed to fetch states.", it.correlationId) }
+        state.error?.let { errors.show(it.userMessage("Failed to fetch states."), it.correlationId) }
     }
 
     fun refresh() {
@@ -153,7 +154,7 @@ private class DeleteFlow(
         running = true
         scope.launch {
             attempt { states.delete(unit.id) }
-                .onFailure { errors.show("Failed to delete state.", it.correlationId) }
+                .onFailure { errors.show(it.userMessage("Failed to delete state."), it.correlationId) }
             running = false
         }
     }

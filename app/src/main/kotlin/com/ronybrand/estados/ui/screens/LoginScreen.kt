@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.ronybrand.estados.auth.AuthController
 import com.ronybrand.estados.core.attempt
 import com.ronybrand.estados.core.correlationId
+import com.ronybrand.estados.core.userMessage
 import com.ronybrand.estados.ui.AppColors
 import com.ronybrand.estados.ui.components.FormPage
 import com.ronybrand.estados.ui.components.rememberErrorMessage
@@ -50,7 +51,7 @@ fun LoginScreen(auth: AuthController, onBack: () -> Unit, onSignedIn: () -> Unit
                 .onSuccess { onSignedIn() }
                 .onFailure {
                     submitting = false
-                    errors.show("Invalid username or password.", it.correlationId)
+                    errors.show(it.userMessage("Invalid username or password."), it.correlationId)
                 }
         }
     }
