@@ -42,6 +42,55 @@ Hilt would add a code generator for something a constructor already does.
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    subgraph Device["Android device"]
+        direction LR
+        UI["Compose screens
+(EstadosRoot: NavHost + guard)"]
+        Store["StatesStore
+(list, search, sort)"]
+        Auth["AuthController
+(session as StateFlow)"]
+        Repos["Repositories
+(state, auth, info)"]
+        Api["ApiClient
+(OkHttp interceptor: request id,
+bearer, GET retry, 401)"]
+        Tokens["TokenStore"]
+        Keystore[("Android Keystore
+(AES-GCM key)")]
+    end
+
+    subgraph EC2["Backend (EC2)"]
+        direction LR
+        App["estado-app
+(Spring Boot)"]
+        DB[("Postgres")]
+    end
+
+    Lambda["start-api Lambda
+(opened in the browser)"]
+
+    UI --> Store
+    UI --> Auth
+    Store --> Repos
+    Auth --> Repos
+    Repos --> Api
+    Api -- "HTTPS (BuildConfig.API_URL)" --> App
+    App --> DB
+    Api --> Tokens
+    Auth --> Tokens
+    Tokens --> Keystore
+    UI -. "API unreachable:
+Turn on the API" .-> Lambda
+    Lambda -. "starts the instance" .-> EC2
+```
+
+The app talks straight to the API: a native app has no origin, so there is no BFF proxy. The dashed
+path is the [Turn on the API](#when-the-api-is-turned-off) link, shown only when the API does not
+answer.
+
 ```
 com.ronybrand.estados
 ├── EstadosApp, MainActivity, AppContainer   # process wiring; AppContainer builds the real graph
