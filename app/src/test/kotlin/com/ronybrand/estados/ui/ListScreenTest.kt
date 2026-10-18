@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ronybrand.estados.core.API_UNAVAILABLE_MESSAGE
 import com.ronybrand.estados.core.ApiException
 import com.ronybrand.estados.support.AppUnderTest
 import com.ronybrand.estados.support.FakeInfoRepository
@@ -175,6 +176,15 @@ class ListScreenTest {
         rule.mainClock.advanceTimeBy(5_100)
 
         rule.onNodeWithText("Failed to delete state.").assertDoesNotExist()
+    }
+
+    @Test
+    fun `an unreachable api says so and offers to turn it on`() {
+        val unreachable = ApiException(null, null, "Network error")
+        app(TestDeps(repository = FakeStateRepository().apply { failList = unreachable }))
+
+        rule.onNodeWithText(API_UNAVAILABLE_MESSAGE).assertIsDisplayed()
+        rule.onNodeWithTag("turn-on-api").assertIsDisplayed()
     }
 
     @Test

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ronybrand.estados.core.attempt
 import com.ronybrand.estados.core.correlationId
+import com.ronybrand.estados.core.userMessage
 import com.ronybrand.estados.data.FederativeUnit
 import com.ronybrand.estados.data.NewFederativeUnit
 import com.ronybrand.estados.state.StatesStore
@@ -38,7 +39,7 @@ fun CreateStateScreen(states: StatesStore, onClose: () -> Unit) {
                         .onSuccess { onClose() }
                         .onFailure {
                             saving = false
-                            errors.show("Failed to create state.", it.correlationId)
+                            errors.show(it.userMessage("Failed to create state."), it.correlationId)
                         }
                 }
             },
@@ -75,7 +76,7 @@ fun EditStateScreen(states: StatesStore, rawId: String?, onClose: () -> Unit) {
 
     FormPage(
         title = "Edit state",
-        error = errors.error ?: failure?.let { "Failed to fetch state." },
+        error = errors.error ?: failure?.userMessage("Failed to fetch state."),
         requestId = if (errors.error != null) errors.requestId else failure?.correlationId,
         onBack = onClose,
     ) {
@@ -97,7 +98,7 @@ fun EditStateScreen(states: StatesStore, rawId: String?, onClose: () -> Unit) {
                             .onSuccess { onClose() }
                             .onFailure {
                                 saving = false
-                                errors.show("Failed to update state.", it.correlationId)
+                                errors.show(it.userMessage("Failed to update state."), it.correlationId)
                             }
                     }
                 },
