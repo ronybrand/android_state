@@ -12,6 +12,10 @@ It consumes the [Estado project](https://github.com/ronybrand/estado)'s REST API
 rules, the messages and the API contract are the same; the app follows Kotlin and Jetpack Compose
 conventions instead of the web, React Native or Flutter ones.
 
+The app also includes **Ask AI**, like the Angular and React clients. It sends Portuguese or English
+questions to the backend's `/ask` endpoint, renders responses as selectable Markdown and never ships
+AI-provider credentials in the Android binary.
+
 ## Stack
 
 - Kotlin 2.4 (JDK 17 target), Android Gradle Plugin 9, `minSdk` 26, `targetSdk` 37
@@ -35,6 +39,7 @@ Hilt would add a code generator for something a constructor already does.
 | Auth "loading" state, or a hydration gate | Token read in `Application.onCreate`, before the first frame                        |
 | Router guard that waits for auth          | A `LaunchedEffect` on (session, route) sends a protected screen to the login        |
 | `State` type                              | `FederativeUnit`: `State` already means too many things in Compose                  |
+| AI assistant at `ask-ai` via `/ask`       | Localized Compose form, Markdown answer, request-id errors                         |
 | Table, `<dialog>` confirmation            | `LazyColumn` + pull to refresh, `AlertDialog`                                       |
 | axe-core accessibility run                | `assertAccessible` on every screen (48 dp targets, a label on every control), palette contrast, live-region errors, a sort direction read aloud |
 | Footer: frontend commit from version.json | App version from the binary (`BuildConfig.VERSION_NAME`)                            |
@@ -49,7 +54,7 @@ flowchart LR
         UI["Compose screens\n(EstadosRoot: NavHost + guard)"]
         Store["StatesStore\n(list, search, sort)"]
         Auth["AuthController\n(session as StateFlow)"]
-        Repos["Repositories\n(state, auth, info)"]
+        Repos["Repositories\n(state, auth, info, ask)"]
         Api["ApiClient\n(OkHttp interceptor: request id,\nbearer, GET retry, 401)"]
         Tokens["TokenStore"]
         Keystore[("Android Keystore\n(AES-GCM key)")]
@@ -87,10 +92,10 @@ com.ronybrand.estados
 ├── AppDependencies                          # what the screens need: the app wires real ones, tests wire fakes
 ├── core/      ApiClient (OkHttp interceptor: request id, bearer, GET retry, 401), TokenStore,
 │              KeystoreKeyValueStore, Jwt, Config, SessionEvents, FormatDate, Uuid, Attempt
-├── data/      FederativeUnit + the anti-corruption mapping, validation, the three repositories
+├── data/      FederativeUnit + the anti-corruption mapping, validation, API repositories
 ├── auth/      AuthController (StateFlow of the session) and ExpiryTimer
 ├── state/     StatesStore: the list, its search and sort, reloaded after every write
-└── ui/        Theme, EstadosRoot (NavHost + guard), screens/, components/
+└── ui/        Theme, EstadosRoot (NavHost + guard), screens/ (including Ask AI), components/
 
 app/src/test/  mirrors main; support/ holds the fakes and the app harness
 app/src/e2e/   manifest and network config for the build type the Maestro flows install
@@ -119,6 +124,8 @@ e2e/           mock API (Node, zero dependencies), Maestro flows, the runner scr
   contract and are **not** translated; `FederativeUnit.fromJson` is the anti-corruption layer.
 - English and Brazilian Portuguese use Android string resources; the app follows the device locale and registers both
   languages for Android's per-app language settings. Dates use the active locale too.
+- AI questions use the current app language and an extended response timeout; they use the same `ApiClient` for
+  request IDs and structured errors.
 - No async side effects (queues, notifications) exist in this client, so there is nothing to move off
   the request path.
 
@@ -148,12 +155,13 @@ emulator the host machine is `http://10.0.2.2:<port>`; Android blocks cleartext 
 builds, so a real deployment must be `https`.
 
 Demo credentials (intentionally public): see the backend's README, also shown on the login screen.
-Deep links: `estados://state/new` and `estados://state/{id}/edit` (the guard still applies).
+The public AI assistant is available at the `ask-ai` route. Deep links: `estados://state/new` and
+`estados://state/{id}/edit` (the guard still applies).
 
 ## Scripts
 
 ```bash
-./gradlew testDebugUnitTest      # 143 tests, JVM only (Robolectric draws the Compose screens)
+./gradlew testDebugUnitTest      # 161 tests, JVM only (Robolectric draws the Compose screens)
 ./gradlew koverVerify            # line coverage floor of 90% (about 98% measured)
 ./gradlew ktlintCheck detekt lintDebug
 ./gradlew :app:assembleRelease   # minified; unsigned without key.properties
@@ -214,9 +222,9 @@ APK is signed by the key it was given.
 
 The data, session and state layers (the HTTP client, the token store, the repositories, the auth
 controller, the list store) were built test-first (red, green): the specs were written and run
-failing before the code they cover, and the history shows the order. **The Compose screens were
-written before their tests**, and then covered screen by screen; that is a departure from the other
-clients' process and the history shows it.
+failing before the code they cover, and the history shows the order. The AI repository and Compose
+screen also follow that red/green sequence, with tests for the request contract, slow responses,
+navigation, loading, Markdown and errors.
 
 ## Not done yet
 
