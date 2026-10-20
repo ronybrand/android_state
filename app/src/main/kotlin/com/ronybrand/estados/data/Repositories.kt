@@ -9,7 +9,7 @@ import java.time.LocalDateTime
 
 data class AskResponse(val answer: String)
 
-interface AskRepository {
+fun interface AskRepository {
     suspend fun ask(question: String, language: String): AskResponse
 }
 
