@@ -50,5 +50,5 @@
     <string name="start_api">Ativar a API</string>
     <string name="reference_id">ID de referência: %1$s</string>
     <string name="app_version">App %1$s</string>
-    <string name="backend_version">API %1$s · %2$s</string>
+    <string name="backend_version">back-end %1$s · %2$s</string>
 </resources>

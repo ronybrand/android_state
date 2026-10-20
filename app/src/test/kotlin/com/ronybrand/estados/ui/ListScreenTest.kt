@@ -45,7 +45,7 @@ class ListScreenTest {
         rule.onAllNodesWithText("Created: Jan 10, 2026, 9:00:00\u202fAM").assertCountEquals(3)
         rule.onAllNodesWithText("Updated: -").assertCountEquals(3)
         rule.onNodeWithText("App 1.2.3").assertExists()
-        rule.onNodeWithText("API abc1234 · Oct 1, 2026, 12:00:00\u202fPM").assertExists()
+        rule.onNodeWithText("back abc1234 · Oct 1, 2026, 12:00:00\u202fPM").assertExists()
     }
 
     @Test
