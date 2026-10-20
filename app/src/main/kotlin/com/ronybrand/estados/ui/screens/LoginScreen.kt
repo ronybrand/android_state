@@ -20,14 +20,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ronybrand.estados.R
 import com.ronybrand.estados.auth.AuthController
 import com.ronybrand.estados.core.attempt
 import com.ronybrand.estados.core.correlationId
+import com.ronybrand.estados.core.isApiUnavailable
 import com.ronybrand.estados.core.userMessage
 import com.ronybrand.estados.ui.AppColors
 import com.ronybrand.estados.ui.components.FormPage
@@ -38,6 +41,9 @@ import kotlinx.coroutines.launch
 fun LoginScreen(auth: AuthController, onBack: () -> Unit, onSignedIn: () -> Unit) {
     val errors = rememberErrorMessage()
     val scope = rememberCoroutineScope()
+    val invalidCredentialsMessage = stringResource(R.string.invalid_credentials_error)
+    val apiUnavailableMessage = stringResource(R.string.api_unavailable_message)
+    val demoCredentials = stringResource(R.string.demo_credentials_note, "admin / Estado-Demo-2026")
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var submitting by remember { mutableStateOf(false) }
@@ -51,17 +57,27 @@ fun LoginScreen(auth: AuthController, onBack: () -> Unit, onSignedIn: () -> Unit
                 .onSuccess { onSignedIn() }
                 .onFailure {
                     submitting = false
-                    errors.show(it.userMessage("Invalid username or password."), it.correlationId)
+                    errors.show(
+                        it.userMessage(invalidCredentialsMessage, apiUnavailableMessage),
+                        it.correlationId,
+                        it.isApiUnavailable,
+                    )
                 }
         }
     }
 
-    FormPage(title = "Login", error = errors.error, requestId = errors.requestId, onBack = onBack) {
+    FormPage(
+        title = stringResource(R.string.login_title),
+        error = errors.error,
+        requestId = errors.requestId,
+        onBack = onBack,
+        apiUnavailable = errors.apiUnavailable,
+    ) {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("Username") },
+                label = { Text(stringResource(R.string.username)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth().testTag("username"),
@@ -69,7 +85,7 @@ fun LoginScreen(auth: AuthController, onBack: () -> Unit, onSignedIn: () -> Unit
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Password") },
+                label = { Text(stringResource(R.string.password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
@@ -85,12 +101,12 @@ fun LoginScreen(auth: AuthController, onBack: () -> Unit, onSignedIn: () -> Unit
                     if (submitting) {
                         CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = AppColors.Muted)
                     } else {
-                        Text("Log in")
+                        Text(stringResource(R.string.login))
                     }
                 }
             }
             Text(
-                "Demo credentials (intentionally public): admin / Estado-Demo-2026",
+                demoCredentials,
                 fontSize = 13.sp,
                 color = AppColors.Muted,
                 modifier = Modifier.testTag("demo-credentials"),

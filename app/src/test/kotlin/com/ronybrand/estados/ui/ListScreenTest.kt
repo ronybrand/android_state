@@ -42,17 +42,17 @@ class ListScreenTest {
         rule.onNodeWithText("São Paulo").assertIsDisplayed()
         rule.onNodeWithText("Rio de Janeiro").assertIsDisplayed()
         rule.onNodeWithText("Minas Gerais").assertIsDisplayed()
-        rule.onAllNodesWithText("Created: 01/10/2026, 09:00:00 AM").assertCountEquals(3)
+        rule.onAllNodesWithText("Created: Jan 10, 2026, 9:00:00\u202fAM").assertCountEquals(3)
         rule.onAllNodesWithText("Updated: -").assertCountEquals(3)
-        rule.onNodeWithText("app 1.2.3").assertExists()
-        rule.onNodeWithText("back abc1234 · 10/01/2026, 12:00:00 PM").assertExists()
+        rule.onNodeWithText("App 1.2.3").assertExists()
+        rule.onNodeWithText("back abc1234 · Oct 1, 2026, 12:00:00\u202fPM").assertExists()
     }
 
     @Test
     fun `the footer hides the backend build when it cannot be read`() {
         app(TestDeps(infoRepository = FakeInfoRepository(info = null)))
 
-        rule.onNodeWithText("app 1.2.3").assertExists()
+        rule.onNodeWithText("App 1.2.3").assertExists()
         rule.onNodeWithText("|").assertDoesNotExist()
     }
 

@@ -20,6 +20,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -42,9 +43,14 @@ const val API_UNAVAILABLE_MESSAGE =
 
 /**
  * Page served by the start-api Lambda (backend repo, ADR 0026): anti-bot challenge, starts the EC2 and waits for the
- * API to come back. Opened in the browser, since the challenge widget needs one. ?lang=en: this app is English-only.
+ * API to come back. Opened in the browser, since the challenge widget needs one.
  */
-const val START_API_URL = "https://pizowbnhivr3vholalz5r7ajta0mkvqn.lambda-url.us-east-1.on.aws/?lang=en"
+const val START_API_URL = "https://pizowbnhivr3vholalz5r7ajta0mkvqn.lambda-url.us-east-1.on.aws/"
+
+fun startApiUrl(locale: Locale): String {
+    val language = if (locale.language == "pt") "pt" else "en"
+    return "$START_API_URL?lang=$language"
+}
 
 private val GATEWAY_STATUSES = setOf(502, 503, 504)
 
@@ -55,8 +61,11 @@ private val GATEWAY_STATUSES = setOf(502, 503, 504)
 val Throwable.isApiUnavailable: Boolean
     get() = this is ApiException && (status == null || status in GATEWAY_STATUSES)
 
-/** [fallback] for an ordinary failure, or the "API offline" message when the API is unavailable. */
-fun Throwable.userMessage(fallback: String): String = if (isApiUnavailable) API_UNAVAILABLE_MESSAGE else fallback
+/** [fallback] for an ordinary failure, or [apiUnavailableMessage] when the API is unavailable. */
+fun Throwable.userMessage(
+    fallback: String,
+    apiUnavailableMessage: String = API_UNAVAILABLE_MESSAGE,
+): String = if (isApiUnavailable) apiUnavailableMessage else fallback
 
 /** The backend answered, but not with the shape this client expects. */
 class MalformedResponseException(message: String, cause: Throwable? = null) : IOException(message, cause)

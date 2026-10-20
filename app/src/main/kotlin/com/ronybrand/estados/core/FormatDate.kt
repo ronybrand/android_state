@@ -5,16 +5,14 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.time.format.FormatStyle
 import java.util.Locale
-
-// A custom pattern, not a localized one: since JDK 20 the localized en_US pattern puts a narrow no-break space before
-// AM/PM, and the web clients print a regular one.
-private val FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy, hh:mm:ss a", Locale.US)
 
 private val HAS_ZONE = Regex("(Z|[+-][0-9]{2}:?[0-9]{2})$")
 
-/** The same format as the web apps. */
-fun formatDate(date: LocalDateTime?): String = date?.format(FORMATTER) ?: "-"
+/** Formats dates using the user's locale while retaining seconds for the timestamps shown by the backend. */
+fun formatDate(date: LocalDateTime?, locale: Locale = Locale.getDefault()): String =
+    date?.format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(locale)) ?: "-"
 
 /**
  * The backend writes most timestamps without a zone, and those are shown as written; one with a zone (the build time)

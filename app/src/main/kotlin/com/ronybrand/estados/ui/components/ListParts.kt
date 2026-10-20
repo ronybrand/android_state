@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -34,12 +35,14 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ronybrand.estados.R
 import com.ronybrand.estados.core.formatDate
 import com.ronybrand.estados.data.FederativeUnit
 import com.ronybrand.estados.state.SortDirection
 import com.ronybrand.estados.state.SortField
 import com.ronybrand.estados.state.SortState
 import com.ronybrand.estados.ui.AppColors
+import java.util.Locale
 
 @Composable
 fun StateListItem(
@@ -49,6 +52,9 @@ fun StateListItem(
     modifier: Modifier = Modifier,
     deleting: Boolean = false,
 ) {
+    val locale = Locale.forLanguageTag(stringResource(R.string.date_locale_tag))
+    val editDescription = stringResource(R.string.edit_state_accessibility, unit.abbreviation)
+    val deleteDescription = stringResource(R.string.delete_state_accessibility, unit.abbreviation)
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -59,49 +65,64 @@ fun StateListItem(
                 Text(unit.name, fontSize = 17.sp)
             }
             Text(
-                "Created: ${formatDate(unit.createdAt)}",
+                stringResource(R.string.created_date, formatDate(unit.createdAt, locale)),
                 fontSize = 12.sp,
                 color = AppColors.Muted,
                 modifier = Modifier.padding(top = 4.dp),
             )
-            Text("Updated: ${formatDate(unit.updatedAt)}", fontSize = 12.sp, color = AppColors.Muted)
-            Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // The visible text is "Edit"; a screen reader needs to know which state it edits.
-                Button(
-                    onClick = { onEdit(unit) },
-                    modifier = Modifier.testTag("edit-${unit.id}").clearAndSetSemantics {
-                        contentDescription = "Edit ${unit.abbreviation}"
-                        role = Role.Button
-                        onClick {
-                            onEdit(unit)
-                            true
-                        }
-                    },
-                ) {
-                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text("Edit", modifier = Modifier.padding(start = 8.dp))
+            Text(
+                stringResource(R.string.updated_date, formatDate(unit.updatedAt, locale)),
+                fontSize = 12.sp,
+                color = AppColors.Muted,
+            )
+            StateActions(unit, onEdit, onDelete, deleting, editDescription, deleteDescription)
+        }
+    }
+}
+
+@Composable
+private fun StateActions(
+    unit: FederativeUnit,
+    onEdit: (FederativeUnit) -> Unit,
+    onDelete: (FederativeUnit) -> Unit,
+    deleting: Boolean,
+    editDescription: String,
+    deleteDescription: String,
+) {
+    Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(
+            onClick = { onEdit(unit) },
+            modifier = Modifier.testTag("edit-${unit.id}").clearAndSetSemantics {
+                contentDescription = editDescription
+                role = Role.Button
+                onClick {
+                    onEdit(unit)
+                    true
                 }
-                Button(
-                    onClick = { onDelete(unit) },
-                    enabled = !deleting,
-                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Danger),
-                    modifier = Modifier.testTag("delete-${unit.id}").clearAndSetSemantics {
-                        contentDescription = "Delete ${unit.abbreviation}"
-                        role = Role.Button
-                        if (deleting) {
-                            disabled()
-                        } else {
-                            onClick {
-                                onDelete(unit)
-                                true
-                            }
-                        }
-                    },
-                ) {
-                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text("Delete", modifier = Modifier.padding(start = 8.dp))
+            },
+        ) {
+            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(stringResource(R.string.edit), modifier = Modifier.padding(start = 8.dp))
+        }
+        Button(
+            onClick = { onDelete(unit) },
+            enabled = !deleting,
+            colors = ButtonDefaults.buttonColors(containerColor = AppColors.Danger),
+            modifier = Modifier.testTag("delete-${unit.id}").clearAndSetSemantics {
+                contentDescription = deleteDescription
+                role = Role.Button
+                if (deleting) {
+                    disabled()
+                } else {
+                    onClick {
+                        onDelete(unit)
+                        true
+                    }
                 }
-            }
+            },
+        ) {
+            Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(stringResource(R.string.delete), modifier = Modifier.padding(start = 8.dp))
         }
     }
 }
@@ -115,17 +136,18 @@ fun SortBar(sort: SortState, onSort: (SortField) -> Unit, modifier: Modifier = M
         verticalArrangement = Arrangement.Center,
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Sort by", color = AppColors.Muted)
+        Text(stringResource(R.string.sort_by), color = AppColors.Muted)
         for (field in SortField.entries) {
             val selected = sort.active == field
             val ascending = sort.direction == SortDirection.Ascending
             // Read as "Name, ascending": the visual arrow alone says nothing to a screen reader.
-            val direction = if (ascending) "ascending" else "descending"
-            val description = if (selected) "${field.label}, $direction" else field.label
+            val fieldLabel = field.localizedLabel()
+            val direction = stringResource(if (ascending) R.string.ascending else R.string.descending)
+            val description = if (selected) "$fieldLabel, $direction" else fieldLabel
             FilterChip(
                 selected = selected,
                 onClick = { onSort(field) },
-                label = { Text(field.label) },
+                label = { Text(fieldLabel) },
                 leadingIcon = if (selected) {
                     { Text(if (ascending) "↑" else "↓", color = MaterialTheme.colorScheme.primary) }
                 } else {
@@ -144,3 +166,11 @@ fun SortBar(sort: SortState, onSort: (SortField) -> Unit, modifier: Modifier = M
         }
     }
 }
+
+@Composable
+private fun SortField.localizedLabel(): String = stringResource(
+    when (this) {
+        SortField.Abbreviation -> R.string.sort_abbreviation
+        SortField.Name -> R.string.sort_name
+    },
+)

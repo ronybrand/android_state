@@ -8,9 +8,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ronybrand.estados.R
 import com.ronybrand.estados.core.attempt
 import com.ronybrand.estados.core.correlationId
+import com.ronybrand.estados.core.isApiUnavailable
 import com.ronybrand.estados.core.userMessage
 import com.ronybrand.estados.data.FederativeUnit
 import com.ronybrand.estados.data.NewFederativeUnit
@@ -25,10 +28,18 @@ import kotlinx.coroutines.launch
 fun CreateStateScreen(states: StatesStore, onClose: () -> Unit) {
     val errors = rememberErrorMessage()
     val scope = rememberCoroutineScope()
+    val addStateError = stringResource(R.string.add_state_error)
+    val apiUnavailableMessage = stringResource(R.string.api_unavailable_message)
     var saving by remember { mutableStateOf(false) }
     val existing = states.state.collectAsStateWithLifecycle().value.units.orEmpty().map { it.abbreviation }
 
-    FormPage(title = "New state", error = errors.error, requestId = errors.requestId, onBack = onClose) {
+    FormPage(
+        title = stringResource(R.string.new_state_title),
+        error = errors.error,
+        requestId = errors.requestId,
+        onBack = onClose,
+        apiUnavailable = errors.apiUnavailable,
+    ) {
         StateForm(
             disabled = saving,
             existingAbbreviations = existing,
@@ -39,7 +50,11 @@ fun CreateStateScreen(states: StatesStore, onClose: () -> Unit) {
                         .onSuccess { onClose() }
                         .onFailure {
                             saving = false
-                            errors.show(it.userMessage("Failed to create state."), it.correlationId)
+                            errors.show(
+                                it.userMessage(addStateError, apiUnavailableMessage),
+                                it.correlationId,
+                                it.isApiUnavailable,
+                            )
                         }
                 }
             },
@@ -60,12 +75,20 @@ fun EditStateScreen(states: StatesStore, rawId: String?, onClose: () -> Unit) {
     // A path segment is user-controllable (deep links): validate before it reaches the API.
     val id = rawId?.toIntOrNull()?.takeIf { it > 0 }
     if (id == null) {
-        FormPage(title = "Edit state", error = "Invalid state.", requestId = null, onBack = onClose) {}
+        FormPage(
+            title = stringResource(R.string.edit_state_title),
+            error = stringResource(R.string.invalid_state),
+            requestId = null,
+            onBack = onClose,
+        ) {}
         return
     }
 
     val errors = rememberErrorMessage()
     val scope = rememberCoroutineScope()
+    val loadStateError = stringResource(R.string.load_state_error)
+    val updateStateError = stringResource(R.string.update_state_error)
+    val apiUnavailableMessage = stringResource(R.string.api_unavailable_message)
     var saving by remember { mutableStateOf(false) }
     var loaded by remember(id) { mutableStateOf<Loaded>(Loaded.Loading) }
     LaunchedEffect(id) {
@@ -75,10 +98,11 @@ fun EditStateScreen(states: StatesStore, rawId: String?, onClose: () -> Unit) {
     val failure = (loaded as? Loaded.Failed)?.error
 
     FormPage(
-        title = "Edit state",
-        error = errors.error ?: failure?.userMessage("Failed to fetch state."),
+        title = stringResource(R.string.edit_state_title),
+        error = errors.error ?: failure?.userMessage(loadStateError, apiUnavailableMessage),
         requestId = if (errors.error != null) errors.requestId else failure?.correlationId,
         onBack = onClose,
+        apiUnavailable = errors.apiUnavailable || failure?.isApiUnavailable == true,
     ) {
         when (val current = loaded) {
             Loaded.Loading -> LoadingIndicator(Modifier)
@@ -98,7 +122,11 @@ fun EditStateScreen(states: StatesStore, rawId: String?, onClose: () -> Unit) {
                             .onSuccess { onClose() }
                             .onFailure {
                                 saving = false
-                                errors.show(it.userMessage("Failed to update state."), it.correlationId)
+                                errors.show(
+                                    it.userMessage(updateStateError, apiUnavailableMessage),
+                                    it.correlationId,
+                                    it.isApiUnavailable,
+                                )
                             }
                     }
                 },
