@@ -24,9 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.ronybrand.estados.R
 import com.ronybrand.estados.ui.AppColors
 
 val BrandBarColors
@@ -46,6 +48,7 @@ fun FormPage(
     error: String?,
     requestId: String?,
     onBack: () -> Unit,
+    apiUnavailable: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     Scaffold(
@@ -56,7 +59,7 @@ fun FormPage(
                 title = {},
                 navigationIcon = {
                     IconButton(onClick = onBack, modifier = Modifier.testTag("back")) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = BrandBarColors,
@@ -75,7 +78,7 @@ fun FormPage(
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 16.dp).semantics { heading() },
                 )
-                ErrorBanner(error, requestId)
+                ErrorBanner(error, requestId, apiUnavailable = apiUnavailable)
                 content()
             }
         }

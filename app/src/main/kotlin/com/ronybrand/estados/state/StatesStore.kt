@@ -13,9 +13,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** The wire values are the backend's `sort` contract (sigla, nome); the labels are what the user reads. */
-enum class SortField(val wire: String, val label: String) {
-    Abbreviation("sigla", "Abbreviation"),
-    Name("nome", "Name"),
+enum class SortField(val wire: String) {
+    Abbreviation("sigla"),
+    Name("nome"),
 }
 
 enum class SortDirection(val wire: String) { Ascending("asc"), Descending("desc") }

@@ -117,8 +117,8 @@ e2e/           mock API (Node, zero dependencies), Maestro flows, the runner scr
   Maestro flows find the same elements.
 - The backend's JSON contract (`sigla`, `nome`, ...) and the `/estado` path are the real wire
   contract and are **not** translated; `FederativeUnit.fromJson` is the anti-corruption layer.
-- User-facing text is English and lives in the composables, like in the other clients; move it to
-  string resources the day a second language is needed.
+- English and Brazilian Portuguese use Android string resources; the app follows the device locale and registers both
+  languages for Android's per-app language settings. Dates use the active locale too.
 - No async side effects (queues, notifications) exist in this client, so there is nothing to move off
   the request path.
 

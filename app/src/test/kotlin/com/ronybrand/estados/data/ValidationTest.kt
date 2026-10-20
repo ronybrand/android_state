@@ -12,7 +12,7 @@ class ValidationTest {
 
     @Test
     fun `an abbreviation needs exactly two letters`() {
-        val message = "Enter the state abbreviation with 2 letters."
+        val message = ValidationError.AbbreviationLength
         assertEquals(message, validateAbbreviation(null))
         assertEquals(message, validateAbbreviation(""))
         assertEquals(message, validateAbbreviation("S"))
@@ -22,7 +22,7 @@ class ValidationTest {
 
     @Test
     fun `an abbreviation of two characters must be letters`() {
-        val message = "Enter the state abbreviation with 2 uppercase letters."
+        val message = ValidationError.AbbreviationFormat
         assertEquals(message, validateAbbreviation("S1"))
         assertEquals(message, validateAbbreviation("--"))
         assertEquals(message, validateAbbreviation("ÃO"))
@@ -30,7 +30,7 @@ class ValidationTest {
 
     @Test
     fun `an abbreviation already registered is refused`() {
-        val message = "A state with this abbreviation already exists."
+        val message = ValidationError.AbbreviationDuplicate
         assertEquals(message, validateAbbreviation("sp", existing = listOf("RJ", "SP")))
         assertNull(validateAbbreviation("MG", existing = listOf("RJ", "SP")))
     }
@@ -39,17 +39,17 @@ class ValidationTest {
     fun `the unit being edited may keep its own abbreviation`() {
         assertNull(validateAbbreviation("SP", existing = listOf("RJ", "SP"), current = "SP"))
         assertEquals(
-            "A state with this abbreviation already exists.",
+            ValidationError.AbbreviationDuplicate,
             validateAbbreviation("RJ", existing = listOf("RJ", "SP"), current = "SP"),
         )
     }
 
     @Test
     fun `a name needs between 3 and 100 characters once trimmed`() {
-        assertEquals("Enter the state name with at least 3 characters.", validateName(null))
-        assertEquals("Enter the state name with at least 3 characters.", validateName("  ab  "))
+        assertEquals(ValidationError.NameMinLength, validateName(null))
+        assertEquals(ValidationError.NameMinLength, validateName("  ab  "))
         assertNull(validateName("Acre"))
         assertNull(validateName("a".repeat(100)))
-        assertEquals("Enter the state name with at most 100 characters.", validateName("a".repeat(101)))
+        assertEquals(ValidationError.NameMaxLength, validateName("a".repeat(101)))
     }
 }

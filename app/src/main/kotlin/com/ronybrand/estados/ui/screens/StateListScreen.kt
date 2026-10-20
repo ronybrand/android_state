@@ -40,13 +40,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ronybrand.estados.AppDependencies
+import com.ronybrand.estados.R
 import com.ronybrand.estados.auth.AuthStatus
 import com.ronybrand.estados.core.attempt
 import com.ronybrand.estados.core.correlationId
+import com.ronybrand.estados.core.isApiUnavailable
 import com.ronybrand.estados.core.userMessage
 import com.ronybrand.estados.data.FederativeUnit
 import com.ronybrand.estados.state.StatesStore
@@ -78,14 +81,10 @@ fun StateListScreen(
     val state by states.state.collectAsStateWithLifecycle()
     val sort by states.sort.collectAsStateWithLifecycle()
     val authenticated = deps.auth.status.collectAsStateWithLifecycle().value == AuthStatus.Authenticated
-    val errors = rememberErrorMessage()
+    val errors = rememberListErrors(state.error)
     val scope = rememberCoroutineScope()
-    val delete = remember { DeleteFlow(states, errors, scope) }
+    val delete = rememberDeleteFlow(states, errors, scope)
     var refreshing by remember { mutableStateOf(false) }
-
-    LaunchedEffect(state.error) {
-        state.error?.let { errors.show(it.userMessage("Failed to fetch states."), it.correlationId) }
-    }
 
     fun refresh() {
         refreshing = true
@@ -96,7 +95,7 @@ fun StateListScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Brazilian States") }, colors = BrandBarColors) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.states_title)) }, colors = BrandBarColors) },
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = refreshing,
@@ -113,7 +112,7 @@ fun StateListScreen(
                         Header(
                             deps = deps,
                             authenticated = authenticated,
-                            errors = errors.error to errors.requestId,
+                            errors = errors,
                             onLogin = onLogin,
                             onNew = onNew,
                         )
@@ -137,12 +136,45 @@ fun StateListScreen(
     }
 }
 
+@Composable
+private fun rememberListErrors(error: Throwable?): ErrorMessageState {
+    val errors = rememberErrorMessage()
+    val loadStatesError = stringResource(R.string.load_states_error)
+    val apiUnavailableMessage = stringResource(R.string.api_unavailable_message)
+
+    LaunchedEffect(error, loadStatesError, apiUnavailableMessage) {
+        error?.let {
+            errors.show(
+                it.userMessage(loadStatesError, apiUnavailableMessage),
+                it.correlationId,
+                it.isApiUnavailable,
+            )
+        }
+    }
+    return errors
+}
+
+@Composable
+private fun rememberDeleteFlow(
+    states: StatesStore,
+    errors: ErrorMessageState,
+    scope: CoroutineScope,
+): DeleteFlow {
+    val deleteStateError = stringResource(R.string.delete_state_error)
+    val apiUnavailableMessage = stringResource(R.string.api_unavailable_message)
+    return remember(states, errors, scope, deleteStateError, apiUnavailableMessage) {
+        DeleteFlow(states, errors, scope, deleteStateError, apiUnavailableMessage)
+    }
+}
+
 /** The delete a user is about to confirm, and the one in flight (which disables the row buttons). */
 @Stable
 private class DeleteFlow(
     private val states: StatesStore,
     private val errors: ErrorMessageState,
     private val scope: CoroutineScope,
+    private val deleteStateError: String,
+    private val apiUnavailableMessage: String,
 ) {
     var pending by mutableStateOf<FederativeUnit?>(null)
     var running by mutableStateOf(false)
@@ -154,7 +186,13 @@ private class DeleteFlow(
         running = true
         scope.launch {
             attempt { states.delete(unit.id) }
-                .onFailure { errors.show(it.userMessage("Failed to delete state."), it.correlationId) }
+                .onFailure {
+                    errors.show(
+                        it.userMessage(deleteStateError, apiUnavailableMessage),
+                        it.correlationId,
+                        it.isApiUnavailable,
+                    )
+                }
             running = false
         }
     }
@@ -165,16 +203,16 @@ private class DeleteFlow(
 private fun ConfirmDeleteDialog(unit: FederativeUnit, onCancel: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text("Delete state") },
-        text = { Text("Are you sure you want to delete ${unit.abbreviation}?") },
-        dismissButton = { TextButton(onClick = onCancel) { Text("Cancel") } },
+        title = { Text(stringResource(R.string.delete_state_title)) },
+        text = { Text(stringResource(R.string.confirm_delete_message, unit.abbreviation)) },
+        dismissButton = { TextButton(onClick = onCancel) { Text(stringResource(R.string.cancel)) } },
         confirmButton = {
             Button(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = AppColors.Danger),
                 modifier = Modifier.testTag("confirm-delete"),
             ) {
-                Text("Delete")
+                Text(stringResource(R.string.delete))
             }
         },
     )
@@ -206,7 +244,7 @@ private fun LazyListScope.rows(
 private fun Header(
     deps: AppDependencies,
     authenticated: Boolean,
-    errors: Pair<String?, String?>,
+    errors: ErrorMessageState,
     onLogin: () -> Unit,
     onNew: () -> Unit,
 ) {
@@ -220,12 +258,21 @@ private fun Header(
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        ErrorBanner(errors.first, errors.second, Modifier.padding(bottom = 0.dp))
+        ErrorBanner(
+            errors.error,
+            errors.requestId,
+            Modifier.padding(bottom = 0.dp),
+            errors.apiUnavailable,
+        )
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
             if (authenticated) {
-                OutlinedButton(onClick = deps.auth::signOut, modifier = Modifier.testTag("log-out")) { Text("Log out") }
+                OutlinedButton(onClick = deps.auth::signOut, modifier = Modifier.testTag("log-out")) {
+                    Text(stringResource(R.string.log_out))
+                }
             } else {
-                OutlinedButton(onClick = onLogin, modifier = Modifier.testTag("log-in")) { Text("Log in") }
+                OutlinedButton(onClick = onLogin, modifier = Modifier.testTag("log-in")) {
+                    Text(stringResource(R.string.log_in))
+                }
             }
             Button(
                 onClick = onNew,
@@ -233,13 +280,13 @@ private fun Header(
                 modifier = Modifier.testTag("new-state"),
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text("New state", modifier = Modifier.padding(start = 8.dp))
+                Text(stringResource(R.string.new_state), modifier = Modifier.padding(start = 8.dp))
             }
         }
         OutlinedTextField(
             value = text,
             onValueChange = { text = it },
-            label = { Text("Search by name or abbreviation") },
+            label = { Text(stringResource(R.string.search_label)) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             singleLine = true,
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
@@ -259,7 +306,7 @@ private fun LoadFailed(onRetry: () -> Unit) {
     Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
         OutlinedButton(onClick = onRetry, modifier = Modifier.testTag("retry")) {
             Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-            Text("Try again", modifier = Modifier.padding(start = 8.dp))
+            Text(stringResource(R.string.try_again), modifier = Modifier.padding(start = 8.dp))
         }
     }
 }
@@ -271,9 +318,9 @@ private fun Empty(onNew: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("No states registered.", color = AppColors.Muted)
+        Text(stringResource(R.string.no_states), color = AppColors.Muted)
         Button(onClick = onNew, colors = ButtonDefaults.buttonColors(containerColor = AppColors.Success)) {
-            Text("Create the first state")
+            Text(stringResource(R.string.create_first_state))
         }
     }
 }

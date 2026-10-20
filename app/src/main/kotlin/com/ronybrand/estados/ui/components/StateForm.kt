@@ -21,10 +21,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import com.ronybrand.estados.R
 import com.ronybrand.estados.data.NewFederativeUnit
+import com.ronybrand.estados.data.ValidationError
 import com.ronybrand.estados.data.normalizeAbbreviation
 import com.ronybrand.estados.data.validateAbbreviation
 import com.ronybrand.estados.data.validateName
@@ -50,8 +53,12 @@ fun StateForm(
     var abbreviationTouched by rememberSaveable { mutableStateOf(false) }
     var nameTouched by rememberSaveable { mutableStateOf(false) }
 
-    val abbreviationError = validateAbbreviation(abbreviation, existingAbbreviations, initialValues?.abbreviation)
-    val nameError = validateName(name)
+    val abbreviationError = validateAbbreviation(
+        abbreviation,
+        existingAbbreviations,
+        initialValues?.abbreviation,
+    )?.localizedMessage()
+    val nameError = validateName(name)?.localizedMessage()
     val dirty = abbreviation != initialAbbreviation || name != initialName
     val canSave = abbreviationError == null && nameError == null && dirty && !disabled
 
@@ -59,7 +66,7 @@ fun StateForm(
         TouchedTextField(
             value = abbreviation,
             onValueChange = { abbreviation = it.uppercase().take(ABBREVIATION_LENGTH) },
-            label = "Abbreviation",
+            label = stringResource(R.string.sort_abbreviation),
             error = abbreviationError.takeIf { abbreviationTouched },
             onTouched = { abbreviationTouched = true },
             tag = "abbreviation",
@@ -69,13 +76,13 @@ fun StateForm(
         TouchedTextField(
             value = name,
             onValueChange = { name = it },
-            label = "Name",
+            label = stringResource(R.string.sort_name),
             error = nameError.takeIf { nameTouched },
             onTouched = { nameTouched = true },
             tag = "name",
             capitalization = KeyboardCapitalization.Words,
             imeAction = ImeAction.Done,
-            placeholder = "Enter the state name...",
+            placeholder = stringResource(R.string.state_name_placeholder),
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Button(
@@ -86,11 +93,22 @@ fun StateForm(
                 modifier = Modifier.testTag("save"),
             ) {
                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                Text("Save", modifier = Modifier.padding(start = 8.dp))
+                Text(stringResource(R.string.save), modifier = Modifier.padding(start = 8.dp))
             }
         }
     }
 }
+
+@Composable
+private fun ValidationError.localizedMessage(): String = stringResource(
+    when (this) {
+        ValidationError.AbbreviationLength -> R.string.abbreviation_length_error
+        ValidationError.AbbreviationFormat -> R.string.abbreviation_format_error
+        ValidationError.AbbreviationDuplicate -> R.string.abbreviation_duplicate_error
+        ValidationError.NameMinLength -> R.string.name_min_error
+        ValidationError.NameMaxLength -> R.string.name_max_error
+    },
+)
 
 /** A text field that reports once it has been focused and then left, so an untouched empty field is not an error. */
 @Composable

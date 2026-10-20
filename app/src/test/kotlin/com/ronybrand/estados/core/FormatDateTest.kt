@@ -2,16 +2,25 @@ package com.ronybrand.estados.core
 
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.Locale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class FormatDateTest {
     @Test
-    fun `formats like the web clients, with a regular space before AM and PM`() {
-        assertEquals("01/10/2026, 09:00:00 AM", formatDate(LocalDateTime.of(2026, 1, 10, 9, 0, 0)))
-        assertEquals("12/31/2026, 11:05:09 PM", formatDate(LocalDateTime.of(2026, 12, 31, 23, 5, 9)))
-        assertEquals("03/04/2026, 12:00:00 PM", formatDate(LocalDateTime.of(2026, 3, 4, 12, 0, 0)))
-        assertEquals("03/04/2026, 12:00:00 AM", formatDate(LocalDateTime.of(2026, 3, 4, 0, 0, 0)))
+    fun `formats dates with the requested locale`() {
+        assertEquals(
+            "Jan 10, 2026, 9:00:00\u202fAM",
+            formatDate(LocalDateTime.of(2026, 1, 10, 9, 0, 0), Locale.US),
+        )
+        assertEquals(
+            "10 de jan. de 2026 09:00:00",
+            formatDate(LocalDateTime.of(2026, 1, 10, 9, 0, 0), Locale.forLanguageTag("pt-BR")),
+        )
+        assertEquals(
+            "Dec 31, 2026, 11:05:09\u202fPM",
+            formatDate(LocalDateTime.of(2026, 12, 31, 23, 5, 9), Locale.US),
+        )
     }
 
     @Test
