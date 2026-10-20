@@ -3,7 +3,6 @@ package com.ronybrand.estados.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -37,7 +36,10 @@ class AskAiScreenTest {
 
     @Test
     fun `submits a trimmed question in the current language and displays the answer`() {
-        val repository = FakeAskRepository(answer = "# Answer\n\n**27 states.**")
+        val repository = FakeAskRepository(
+            answer = "# Answer\n\n**27 states.**\n\n- A list item\n\n> A quote\n\n" +
+                "Inline `code`, *emphasis*, and [a link](https://example.com).\n\n```kotlin\nval answer = true\n```",
+        )
         val app = AppUnderTest(rule, TestDeps(ask = repository))
         app.nav.navigate(Routes.ASK_AI)
 
@@ -45,6 +47,10 @@ class AskAiScreenTest {
         rule.onNodeWithTag("ask-ai-submit").assertIsEnabled().performClick()
 
         rule.onNodeWithText("27 states.").assertIsDisplayed()
+        rule.onNodeWithText("• A list item").assertIsDisplayed()
+        rule.onNodeWithText("“A quote”").assertIsDisplayed()
+        rule.onNodeWithText("val answer = true").assertIsDisplayed()
+        rule.onNodeWithText("a link", substring = true).assertIsDisplayed()
         assertEquals(listOf("How many states?" to "en"), repository.questions)
     }
 

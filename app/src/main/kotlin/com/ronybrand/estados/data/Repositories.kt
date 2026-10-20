@@ -7,6 +7,28 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.time.LocalDateTime
 
+data class AskResponse(val answer: String)
+
+interface AskRepository {
+    suspend fun ask(question: String, language: String): AskResponse
+}
+
+class ApiAskRepository(private val api: ApiClient) : AskRepository {
+    override suspend fun ask(question: String, language: String): AskResponse {
+        val body = buildJsonObject { put("question", question) }
+        val response = api.send(
+            method = "POST",
+            path = "/ask",
+            query = listOf("lang" to language),
+            body = body,
+            readTimeoutSeconds = ASK_RESPONSE_TIMEOUT_SECONDS,
+        ).asObject("AI response")
+        return AskResponse(response.string("answer", "AI response"))
+    }
+}
+
+const val ASK_RESPONSE_TIMEOUT_SECONDS = 55L
+
 /** Matches the backend's actual REST contract (/estado), not translated: renaming it here would break real calls. */
 private const val BASE_PATH = "/estado"
 private const val PAGE_SIZE = 100

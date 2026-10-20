@@ -76,6 +76,7 @@ fun StateListScreen(
     onLogin: () -> Unit,
     onNew: () -> Unit,
     onEdit: (FederativeUnit) -> Unit,
+    onAskAi: () -> Unit,
 ) {
     val states = deps.states
     val state by states.state.collectAsStateWithLifecycle()
@@ -115,6 +116,7 @@ fun StateListScreen(
                             errors = errors,
                             onLogin = onLogin,
                             onNew = onNew,
+                            onAskAi = onAskAi,
                         )
                     }
                     rows(
@@ -247,6 +249,7 @@ private fun Header(
     errors: ErrorMessageState,
     onLogin: () -> Unit,
     onNew: () -> Unit,
+    onAskAi: () -> Unit,
 ) {
     val states = deps.states
     val sort by states.sort.collectAsStateWithLifecycle()
@@ -281,6 +284,9 @@ private fun Header(
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Text(stringResource(R.string.new_state), modifier = Modifier.padding(start = 8.dp))
+            }
+            OutlinedButton(onClick = onAskAi, modifier = Modifier.testTag("ask-ai")) {
+                Text(stringResource(R.string.ask_ai_button))
             }
         }
         OutlinedTextField(

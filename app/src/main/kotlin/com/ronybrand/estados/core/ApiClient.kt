@@ -139,13 +139,15 @@ class ApiClient(private val baseUrl: String, private val http: OkHttpClient) {
         path: String,
         query: List<Pair<String, String>> = emptyList(),
         body: JsonObject? = null,
+        readTimeoutSeconds: Long? = null,
     ): JsonElement? {
         val url = (baseUrl + path).toHttpUrl().newBuilder().apply {
             query.forEach { (k, v) -> addQueryParameter(k, v) }
         }
         val payload = body?.toString()?.toRequestBody(JSON_MEDIA_TYPE)
         val request = Request.Builder().url(url.build()).method(method, payload ?: emptyBodyFor(method)).build()
-        val response = http.newCall(request).await()
+        val client = readTimeoutSeconds?.let { http.newBuilder().readTimeout(it, TimeUnit.SECONDS).build() } ?: http
+        val response = client.newCall(request).await()
         // Reading the body is socket I/O, which Android forbids on the main thread.
         return withContext(Dispatchers.IO) { response.use { parse(it) } }
     }
