@@ -3,6 +3,16 @@
     <string name="app_name">Estados</string>
     <string name="date_locale_tag">pt-BR</string>
     <string name="states_title">Estados brasileiros</string>
+    <string name="ask_ai_title">Pergunte sobre os estados brasileiros</string>
+    <string name="ask_ai_how_it_works">Agente de IA (Spring AI + Gemini) consulta a API real do backend em tempo real.</string>
+    <string name="ask_ai_language_limit_note">O assistente entende perguntas apenas em português ou inglês.</string>
+    <string name="ask_ai_question_label">Sua pergunta</string>
+    <string name="ask_ai_placeholder">Ex.: Quantos estados existem na região Sudeste?</string>
+    <string name="ask_ai_button">Perguntar</string>
+    <string name="ask_ai_pending_button">Perguntando…</string>
+    <string name="ask_ai_error">Falha ao consultar o assistente. Tente novamente em instantes.</string>
+    <string name="ask_ai_source_link">Ver código do agente de IA no GitHub</string>
+    <string name="ask_ai_source_error">Não foi possível abrir o código do agente de IA.</string>
     <string name="new_state">Novo estado</string>
     <string name="sort_by">Ordenar por</string>
     <string name="sort_abbreviation">Sigla</string>

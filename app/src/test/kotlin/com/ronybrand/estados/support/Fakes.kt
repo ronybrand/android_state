@@ -1,5 +1,7 @@
 package com.ronybrand.estados.support
 
+import com.ronybrand.estados.data.AskRepository
+import com.ronybrand.estados.data.AskResponse
 import com.ronybrand.estados.data.AuthRepository
 import com.ronybrand.estados.data.BackendInfo
 import com.ronybrand.estados.data.FederativeUnit
@@ -89,6 +91,20 @@ class FakeAuthRepository(private val token: () -> String = { jwtValidFor() }) : 
 
     override fun logout() {
         logouts++
+    }
+}
+
+class FakeAskRepository(
+    private val answer: String = "27 states.",
+    private val pendingAnswer: CompletableDeferred<String>? = null,
+    private val failure: Throwable? = null,
+) : AskRepository {
+    val questions = mutableListOf<Pair<String, String>>()
+
+    override suspend fun ask(question: String, language: String): AskResponse {
+        questions += question to language
+        failure?.let { throw it }
+        return AskResponse(pendingAnswer?.await() ?: answer)
     }
 }
 

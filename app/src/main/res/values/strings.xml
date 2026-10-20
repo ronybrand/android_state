@@ -3,6 +3,16 @@
     <string name="app_name">Estados</string>
     <string name="date_locale_tag">en-US</string>
     <string name="states_title">Brazilian States</string>
+    <string name="ask_ai_title">Ask about the Brazilian states</string>
+    <string name="ask_ai_how_it_works">AI agent (Spring AI + Gemini) queries the live backend API.</string>
+    <string name="ask_ai_language_limit_note">The assistant only understands questions in Portuguese or English.</string>
+    <string name="ask_ai_question_label">Your question</string>
+    <string name="ask_ai_placeholder">E.g.: How many states are in the Southeast region?</string>
+    <string name="ask_ai_button">Ask</string>
+    <string name="ask_ai_pending_button">Asking…</string>
+    <string name="ask_ai_error">Failed to reach the AI assistant.</string>
+    <string name="ask_ai_source_link">View the AI agent source on GitHub</string>
+    <string name="ask_ai_source_error">Could not open the AI agent source.</string>
     <string name="new_state">New state</string>
     <string name="sort_by">Sort by</string>
     <string name="sort_abbreviation">Abbreviation</string>

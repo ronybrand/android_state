@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import com.ronybrand.estados.AppDependencies
 import com.ronybrand.estados.auth.AuthStatus
+import com.ronybrand.estados.ui.screens.AskAiScreen
 import com.ronybrand.estados.ui.screens.CreateStateScreen
 import com.ronybrand.estados.ui.screens.EditStateScreen
 import com.ronybrand.estados.ui.screens.LoginScreen
@@ -25,6 +26,7 @@ import com.ronybrand.estados.ui.screens.StateListScreen
 
 object Routes {
     const val LIST = "list"
+    const val ASK_AI = "ask-ai"
     const val LOGIN = "login"
     const val NEW = "state/new"
     const val EDIT = "state/{id}/edit"
@@ -71,7 +73,11 @@ fun EstadosRoot(deps: AppDependencies, navController: NavHostController = rememb
                         onLogin = { navController.navigate(Routes.LOGIN) },
                         onNew = { navController.navigate(Routes.NEW) },
                         onEdit = { navController.navigate(Routes.edit(it.id)) },
+                        onAskAi = { navController.navigate(Routes.ASK_AI) },
                     )
+                }
+                composable(Routes.ASK_AI) {
+                    AskAiScreen(deps.ask, onBack = navController::close)
                 }
                 composable(Routes.LOGIN) {
                     LoginScreen(

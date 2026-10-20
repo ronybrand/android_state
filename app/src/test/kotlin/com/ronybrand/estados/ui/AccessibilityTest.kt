@@ -141,6 +141,12 @@ class AccessibilityTest {
         check()
     }
 
+    @Test
+    fun `the AI assistant form`() {
+        app().open(Routes.ASK_AI)
+        check()
+    }
+
     // Negative controls: without them, a checker that quietly checks nothing would look the same as a clean app.
     // Compose widens the touch area of every clickable to 48 dp on its own, so the control has to switch that off, as
     // a screen that opted out of it would.

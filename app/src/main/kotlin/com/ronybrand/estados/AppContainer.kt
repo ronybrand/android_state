@@ -8,6 +8,7 @@ import com.ronybrand.estados.core.SecureTokenStore
 import com.ronybrand.estados.core.SessionEvents
 import com.ronybrand.estados.core.buildHttpClient
 import com.ronybrand.estados.core.resolveApiBaseUrl
+import com.ronybrand.estados.data.ApiAskRepository
 import com.ronybrand.estados.data.ApiAuthRepository
 import com.ronybrand.estados.data.ApiInfoRepository
 import com.ronybrand.estados.data.ApiStateRepository
@@ -28,6 +29,7 @@ class AppContainer(context: Context) : AppDependencies {
     private val api = ApiClient(resolveApiBaseUrl(BuildConfig.API_URL), buildHttpClient(tokens, events::notifyExpired))
 
     override val auth = AuthController(tokens, ApiAuthRepository(api, tokens), events, scope)
+    override val ask = ApiAskRepository(api)
     override val states = StatesStore(ApiStateRepository(api), scope)
     override val info: InfoRepository = ApiInfoRepository(api)
     override val appVersion: String = BuildConfig.VERSION_NAME
