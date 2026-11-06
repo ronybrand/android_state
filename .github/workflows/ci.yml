@@ -26,7 +26,7 @@ jobs:
           distribution: temurin
           java-version: 21
       # Caches the Gradle home and writes it only from the default branch: a pull request reads what main saved.
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       # Style, static analysis, Android lint (warnings are errors), the unit and Compose tests, and the coverage floor.
       # The tests need no device: Robolectric runs the Compose screens on the JVM.
       - name: Lint, static analysis, tests and the coverage floor
@@ -54,7 +54,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       - name: A release app bundle without a key refuses to build
         run: |
